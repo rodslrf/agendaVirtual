@@ -1,4 +1,4 @@
-import { db, getPool } from "@/server/db"
+import { db } from "@/server/db"
 import { notificacoes } from "@/server/db/schema"
 import { antecedencias, marcoAtual, podeRepetir } from "@/server/alerts/regras"
 import {
@@ -82,14 +82,7 @@ async function disparar(entrada: {
 }
 
 export async function avaliar(agora = new Date()) {
-  const conexao = await getPool().getConnection()
-  try {
-    await conexao.query("SELECT GET_LOCK('agenda_avisos', 10)")
-    return await avaliarAgora(agora)
-  } finally {
-    await conexao.query("SELECT RELEASE_LOCK('agenda_avisos')")
-    conexao.release()
-  }
+  return avaliarAgora(agora)
 }
 
 async function avaliarAgora(agora: Date) {

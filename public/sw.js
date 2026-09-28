@@ -6,7 +6,7 @@ self.addEventListener("push", (event) => {
     dados = {}
   }
   event.waitUntil(
-    self.registration.showNotification(dados.title || "Agenda", {
+    self.registration.showNotification(dados.title || "Agenda Online", {
       body: dados.body || "Horário da agenda",
       icon: dados.icon || "/icone-app.png",
       tag: dados.tag || "agenda",

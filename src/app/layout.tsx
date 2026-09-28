@@ -3,7 +3,6 @@ import { Plus_Jakarta_Sans } from "next/font/google"
 import { Toaster } from "@/components/ui/sonner"
 import { Casca } from "@/components/casca"
 import { ProvedorTema } from "@/components/provedor-tema"
-import { avaliar } from "@/server/alerts/avaliar"
 import "./globals.css"
 
 const jakarta = Plus_Jakarta_Sans({
@@ -12,12 +11,12 @@ const jakarta = Plus_Jakarta_Sans({
 })
 
 export const metadata: Metadata = {
-  title: "Agenda",
+  title: "Agenda Online",
   description: "Tarefas e horários do dia.",
-  applicationName: "Agenda",
+  applicationName: "Agenda Online",
   manifest: "/manifest.webmanifest",
   icons: { icon: "/icone-app.png", apple: "/icone-app.png" },
-  appleWebApp: { capable: true, title: "Agenda", statusBarStyle: "default" },
+  appleWebApp: { capable: true, title: "Agenda Online", statusBarStyle: "default" },
 }
 
 export const viewport: Viewport = {
@@ -28,13 +27,7 @@ export const viewport: Viewport = {
 
 export const dynamic = "force-dynamic"
 
-export default async function RootLayout({ children }: LayoutProps<"/">) {
-  try {
-    await avaliar()
-  } catch (erro) {
-    console.error(erro)
-  }
-
+export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="pt-BR" className={`${jakarta.variable} h-full antialiased`} suppressHydrationWarning>
       <body className="flex min-h-full flex-col bg-background text-foreground">

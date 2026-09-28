@@ -1,6 +1,6 @@
 {
-  "name": "Agenda",
-  "short_name": "Agenda",
+  "name": "Agenda Online",
+  "short_name": "Agenda Online",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#f4fbfa",

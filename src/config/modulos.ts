@@ -1,7 +1,7 @@
 export const modulos = [
   {
     id: "agenda",
-    nome: "Agenda",
+    nome: "Agenda Online",
     href: "/",
     itens: [
       { href: "/", nome: "Hoje" },
