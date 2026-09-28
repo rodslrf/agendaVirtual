@@ -45,7 +45,7 @@ export function Superficie({
   if (desktop) {
     return (
       <Dialog open={aberto} onOpenChange={aoFechar}>
-        <DialogContent className="top-6 flex max-h-[calc(100dvh-3rem)] translate-y-0 flex-col overflow-hidden p-0 sm:max-w-md">
+        <DialogContent className="top-6 flex max-h-[calc(100dvh-3rem)] translate-y-0 flex-col overflow-hidden rounded-lg p-0 shadow-[var(--shadow-popover)] sm:max-w-md">
           <div className="agenda-scroll flex min-h-0 flex-col gap-4 overflow-y-auto overscroll-contain px-4 py-4">
             <DialogHeader>
               <DialogTitle>{titulo}</DialogTitle>
@@ -61,7 +61,7 @@ export function Superficie({
     <Sheet open={aberto} onOpenChange={aoFechar}>
       <SheetContent
         side="bottom"
-        className="data-[side=bottom]:inset-x-3 data-[side=bottom]:bottom-3 data-[side=bottom]:mb-0 max-h-[calc(100dvh-3rem)] gap-0 overflow-hidden rounded-2xl p-0"
+        className="data-[side=bottom]:inset-x-3 data-[side=bottom]:bottom-3 data-[side=bottom]:mb-0 max-h-[calc(100dvh-3rem)] gap-0 overflow-hidden rounded-lg p-0 shadow-[var(--shadow-popover)]"
       >
         <div className="agenda-scroll flex max-h-[calc(100dvh-3rem)] flex-col gap-4 overflow-y-auto overscroll-contain px-4 py-4">
           <SheetHeader>

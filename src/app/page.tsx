@@ -1,7 +1,7 @@
 import { BotoesNovos } from "@/modules/agenda/botoes-novos"
 import { CartaoTarefa } from "@/modules/agenda/cartao-tarefa"
 import { ColunaDia } from "@/modules/agenda/coluna-dia"
-import { listarCompromissosEntre, listarTarefas } from "@/modules/agenda/consultas"
+import { listarCompromissosEntre, listarTarefas, lerAjustes } from "@/modules/agenda/consultas"
 import { verCompromisso, verTarefa } from "@/modules/agenda/mapear"
 import { fimDoDia, inicioDoDia, tituloDia } from "@/modules/agenda/tempo"
 import { marcarConflitos } from "@/modules/agenda/vistas"
@@ -11,6 +11,7 @@ export const dynamic = "force-dynamic"
 
 export default async function Hoje() {
   const agora = new Date()
+  const ajustes = await lerAjustes()
   const tarefas = (await listarTarefas("aberta")).map(verTarefa)
   const horarios = marcarConflitos(
     (await listarCompromissosEntre(inicioDoDia(agora), fimDoDia(agora))).map(verCompromisso),
@@ -26,7 +27,7 @@ export default async function Hoje() {
     <>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight">{tituloDia(agora)}</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">{tituloDia(agora)}</h1>
           <p className="text-muted-foreground">O que vence hoje e os horários marcados.</p>
         </div>
         <BotoesNovos data={dataLocal(agora)} />
@@ -49,7 +50,13 @@ export default async function Hoje() {
           </Secao>
         </div>
         <Secao titulo="Horários">
-          <ColunaDia compromissos={horarios} tarefas={tarefas} data={dataLocal(agora)} />
+          <ColunaDia
+            compromissos={horarios}
+            tarefas={tarefas}
+            data={dataLocal(agora)}
+            expedienteInicio={ajustes.expedienteInicio}
+            expedienteFim={ajustes.expedienteFim}
+          />
         </Secao>
       </div>
     </>

@@ -27,6 +27,7 @@ export function verCompromisso(item: {
   status: "marcado" | "feito" | "cancelado" | "apagada"
   repeticao?: string
   repeteAte?: Date | null
+  tarefaOrigemId?: number | null
 }) {
   const repeticao = item.repeticao && repeticaoValida(item.repeticao) ? item.repeticao : "nenhuma"
   return {
@@ -41,6 +42,7 @@ export function verCompromisso(item: {
     status: item.status,
     repeticao: repeticao as RepeticaoView,
     repeteAte: item.repeteAte ? item.repeteAte.toISOString() : null,
+    tarefaOrigemId: item.tarefaOrigemId ?? null,
   }
 }
 

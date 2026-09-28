@@ -52,6 +52,7 @@ export function FiltroHistorico({
       <Field>
         <FieldLabel>Prioridade</FieldLabel>
         <ToggleGroup
+          variant="outline"
           value={nivel ? [nivel] : []}
           onValueChange={(valor) => setNivel(valor[0] ?? "")}
           spacing={2}

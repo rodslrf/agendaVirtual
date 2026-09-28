@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { chaveCalendario, dataDoCalendario } from "@/modules/agenda/tempo"
 
 const HORAS = Array.from({ length: 24 }, (_, hora) => String(hora).padStart(2, "0"))
 const MINUTOS = Array.from({ length: 60 }, (_, minuto) => String(minuto).padStart(2, "0"))
@@ -16,15 +17,6 @@ export function textoData(valor: string) {
   return `${dia}/${mes}/${ano}`
 }
 
-function diaDoCalendario(valor: string) {
-  const [ano, mes, dia] = valor.split("-").map(Number)
-  return new Date(ano, mes - 1, dia)
-}
-
-function chaveDoCalendario(dia: Date) {
-  return `${dia.getFullYear()}-${String(dia.getMonth() + 1).padStart(2, "0")}-${String(dia.getDate()).padStart(2, "0")}`
-}
-
 export function EscolherData({
   valor,
   aoMudar,
@@ -33,7 +25,7 @@ export function EscolherData({
   aoMudar: (valor: string) => void
 }) {
   const [aberto, setAberto] = useState(false)
-  const selecionada = valor ? diaDoCalendario(valor) : undefined
+  const selecionada = valor ? dataDoCalendario(valor) : undefined
   return (
     <Popover open={aberto} onOpenChange={setAberto}>
       <PopoverTrigger render={<Button variant="outline" className="min-h-11 w-full justify-start" />}>
@@ -53,7 +45,7 @@ export function EscolherData({
           selected={selecionada}
           onSelect={(dia) => {
             if (!dia) return
-            aoMudar(chaveDoCalendario(dia))
+            aoMudar(chaveCalendario(dia))
             setAberto(false)
           }}
         />

@@ -81,7 +81,7 @@ export function PainelAviso() {
         role="alertdialog"
         aria-labelledby="aviso-titulo"
         aria-describedby="aviso-quando"
-        className={`fixed inset-x-3 bottom-16 z-50 flex flex-col gap-2 rounded-xl px-3 py-2.5 text-white lg:bottom-3 lg:flex-row lg:items-center lg:gap-4 ${
+        className={`fixed inset-x-3 bottom-16 z-50 flex flex-col gap-2 rounded-lg px-3 py-2.5 text-white shadow-[var(--shadow-popover)] lg:bottom-3 lg:flex-row lg:items-center lg:gap-4 ${
           urgente ? "bg-destructive" : "bg-aviso"
         }`}
       >

@@ -54,6 +54,20 @@ export function diaDaChave(chave: string) {
   return instanteCuiaba(ano, mes, dia)
 }
 
+/** Dia que o calendário da tela mostra (fuso do navegador, não Cuiabá). */
+export function chaveCalendario(data: Date) {
+  const mes = String(data.getMonth() + 1).padStart(2, "0")
+  const dia = String(data.getDate()).padStart(2, "0")
+  return `${data.getFullYear()}-${mes}-${dia}`
+}
+
+/** Meio-dia local para o DayPicker marcar o mesmo dia civil. */
+export function dataDoCalendario(chave: string) {
+  const [ano, mes, dia] = chave.split("-").map(Number)
+  if (!ano || !mes || !dia) return new Date()
+  return new Date(ano, mes - 1, dia, 12, 0, 0)
+}
+
 export function horaCurta(data: Date) {
   const parte = partesCuiaba(data)
   return `${String(parte.hora).padStart(2, "0")}:${String(parte.minuto).padStart(2, "0")}`
@@ -123,7 +137,30 @@ export function intervaloVista(dia: Date, vista: VistaAgenda): [Date, Date] {
 }
 
 export function tituloVista(dia: Date, vista: VistaAgenda) {
-  if (vista === "dia" || vista === "semana") return tituloDia(dia)
+  if (vista === "semana") {
+    const [inicio, fimExclusivo] = intervaloVista(dia, "semana")
+    const fim = somarDias(fimExclusivo, -1)
+    const formatar = (data: Date, opcoes: Intl.DateTimeFormatOptions) =>
+      new Intl.DateTimeFormat("pt-BR", { timeZone: FUSO, ...opcoes }).format(data)
+    const a = partesCuiaba(inicio)
+    const b = partesCuiaba(fim)
+    if (a.ano === b.ano && a.mes === b.mes) {
+      return `${a.dia} – ${formatar(fim, { day: "numeric", month: "long", year: "numeric" })}`
+    }
+    if (a.ano === b.ano) {
+      return `${formatar(inicio, { day: "numeric", month: "long" })} – ${formatar(fim, {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      })}`
+    }
+    return `${formatar(inicio, { day: "numeric", month: "long", year: "numeric" })} – ${formatar(fim, {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    })}`
+  }
+  if (vista === "dia") return tituloDia(dia)
   if (vista === "mes") {
     const texto = new Intl.DateTimeFormat("pt-BR", {
       timeZone: "America/Cuiaba",

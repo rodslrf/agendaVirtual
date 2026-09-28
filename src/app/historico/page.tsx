@@ -22,7 +22,7 @@ export default async function Historico({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-3">
-        <h1 className="text-3xl font-semibold tracking-tight">Histórico</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Histórico</h1>
         <Button variant="outline" className="min-h-11" nativeButton={false} render={<Link href="/lista" />}>
           Lista
         </Button>

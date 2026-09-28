@@ -11,7 +11,7 @@ export default async function Ajustes() {
   return (
     <>
       <div className="flex items-center justify-between gap-3">
-        <h1 className="text-3xl font-semibold tracking-tight">Ajustes</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Ajustes</h1>
         <Button render={<Link href="/prontas" />} nativeButton={false} variant="outline" className="min-h-11">
           Tarefas prontas
         </Button>
@@ -21,6 +21,8 @@ export default async function Ajustes() {
         urgenteRepetirMinutos={ajustes.urgenteRepetirMinutos}
         aproximacaoRepetirMinutos={ajustes.aproximacaoRepetirMinutos}
         som={ajustes.som}
+        expedienteInicio={ajustes.expedienteInicio}
+        expedienteFim={ajustes.expedienteFim}
       />
       <AtivarAvisos />
     </>

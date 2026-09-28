@@ -34,7 +34,7 @@ export default async function Lista() {
   return (
     <>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <h1 className="text-3xl font-semibold tracking-tight">Lista</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Lista</h1>
         <div className="flex items-center gap-2">
         <Button variant="outline" className="min-h-11" nativeButton={false} render={<Link href="/historico" />}>
             Histórico

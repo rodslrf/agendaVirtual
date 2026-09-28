@@ -66,7 +66,7 @@ export async function enviarPush(aviso: AvisoPush) {
 
 export function pushDeTeste(): AvisoPush {
   return {
-    titulo: "Agenda Online",
+    titulo: "ROTINA Pro - LR CONT",
     corpo: "As notificações do sistema estão ligadas. Este aviso fica até você clicar.",
     tipo: "prazo",
     tag: "agenda-ligada",

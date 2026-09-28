@@ -1,44 +1,50 @@
 import type { Metadata, Viewport } from "next"
-import { Plus_Jakarta_Sans } from "next/font/google"
+import { cookies } from "next/headers"
+import { Inter } from "next/font/google"
 import { Toaster } from "@/components/ui/sonner"
 import { Casca } from "@/components/casca"
 import { ProvedorTema } from "@/components/provedor-tema"
+import { listarTarefas } from "@/modules/agenda/consultas"
+import { verTarefa } from "@/modules/agenda/mapear"
 import "./globals.css"
 
-const jakarta = Plus_Jakarta_Sans({
+const inter = Inter({
   subsets: ["latin"],
-  variable: "--font-jakarta",
+  variable: "--font-inter",
 })
 
 export const metadata: Metadata = {
-  title: "Agenda Online",
+  title: "ROTINA Pro - LR CONT",
   description: "Tarefas e horários do dia.",
-  applicationName: "Agenda Online",
+  applicationName: "ROTINA Pro - LR CONT",
   manifest: "/manifest.webmanifest",
   icons: { icon: "/icone-app.png", apple: "/icone-app.png" },
-  appleWebApp: { capable: true, title: "Agenda Online", statusBarStyle: "default" },
+  appleWebApp: { capable: true, title: "ROTINA Pro - LR CONT", statusBarStyle: "default" },
 }
 
 export const viewport: Viewport = {
-  themeColor: "#0f766e",
+  themeColor: "#855F8C",
   width: "device-width",
   initialScale: 1,
 }
 
 export const dynamic = "force-dynamic"
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const tema = (await cookies()).get("agenda-tema")?.value
+  const escuro = tema === "dark"
+  const tarefas = (await listarTarefas("aberta")).map(verTarefa)
   return (
-    <html lang="pt-BR" className={`${jakarta.variable} h-full antialiased`} suppressHydrationWarning>
-      <body className="flex min-h-full flex-col bg-background text-foreground">
-        <script
-          dangerouslySetInnerHTML={{
-            __html:
-              '(function(){try{if(localStorage.getItem("agenda-tema")==="dark")document.documentElement.classList.add("dark")}catch(e){}})()',
-          }}
-        />
+    <html
+      lang="pt-BR"
+      className={`${inter.variable} h-full antialiased${escuro ? " dark" : ""}`}
+      suppressHydrationWarning
+    >
+      <body className="h-full overflow-hidden bg-background text-foreground">
         <ProvedorTema>
-          <Casca>{children}</Casca>
+          <Casca temaEscuro={escuro} tarefas={tarefas}>
+            {children}
+          </Casca>
           <Toaster position="top-center" />
         </ProvedorTema>
       </body>

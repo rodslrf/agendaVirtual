@@ -206,6 +206,58 @@ export async function salvarCompromisso(entrada: {
   return { ok: true }
 }
 
+export async function moverCompromisso(entrada: {
+  id: number
+  data: string
+  hora: string
+  duracaoMinutos: number
+}) {
+  const duracao = Math.round(entrada.duracaoMinutos)
+  if (duracao < 15 || duracao > 8 * 7 * 24 * 60) return { erro: "A duração fica entre 15 minutos e 8 semanas." }
+  const comecaEm = combinarDataHora(entrada.data, entrada.hora)
+  if (!comecaEm) return { erro: "O horário precisa de dia e hora." }
+  const [atual] = await db.select().from(compromissos).where(eq(compromissos.id, entrada.id)).limit(1)
+  if (!atual) return { erro: "Esse horário não existe mais." }
+  await db
+    .update(compromissos)
+    .set({
+      comecaEm,
+      duracaoMinutos: duracao,
+      duracaoValor: duracao,
+      duracaoUnidade: "minuto",
+      atualizadaEm: new Date(),
+    })
+    .where(eq(compromissos.id, entrada.id))
+  atualizarTelas()
+  return { ok: true }
+}
+
+export async function bloquearTarefa(entrada: { tarefaId: number; data: string; hora: string }) {
+  const comecaEm = combinarDataHora(entrada.data, entrada.hora)
+  if (!comecaEm) return { erro: "O horário precisa de dia e hora." }
+  const [tarefa] = await db.select().from(tarefas).where(eq(tarefas.id, entrada.tarefaId)).limit(1)
+  if (!tarefa || tarefa.status !== "aberta") return { erro: "Essa tarefa não está aberta." }
+  const agora = new Date()
+  await db.insert(compromissos).values({
+    titulo: tarefa.titulo,
+    notas: tarefa.notas,
+    comecaEm,
+    duracaoMinutos: 30,
+    duracaoValor: 30,
+    duracaoUnidade: "minuto",
+    status: "marcado",
+    tarefaOrigemId: tarefa.id,
+    criadaEm: agora,
+    atualizadaEm: agora,
+  })
+  await db
+    .update(tarefas)
+    .set({ venceEm: comecaEm, atualizadaEm: agora })
+    .where(eq(tarefas.id, tarefa.id))
+  atualizarTelas()
+  return { ok: true }
+}
+
 export async function nomesEmConflito(entrada: {
   id?: number
   data: string
@@ -279,11 +331,17 @@ export async function pularOcorrencia(id: number, ocorreEm: string) {
   return { ok: true }
 }
 
+function horaValida(valor: string) {
+  return /^([01]\d|2[0-3]):[0-5]\d$/.test(valor)
+}
+
 export async function salvarAjustes(entrada: {
   antecedenciasMinutos: string
   urgenteRepetirMinutos: number
   aproximacaoRepetirMinutos: number
   som: boolean
+  expedienteInicio: string
+  expedienteFim: string
 }) {
   const numeros = entrada.antecedenciasMinutos
     .split(",")
@@ -295,6 +353,9 @@ export async function salvarAjustes(entrada: {
   if (![15, 30, 60, 120].includes(urgente) || ![15, 30, 60, 120].includes(aproximacao)) {
     return { erro: "Escolha de quanto em quanto tempo o aviso repete." }
   }
+  if (!horaValida(entrada.expedienteInicio) || !horaValida(entrada.expedienteFim)) {
+    return { erro: "O expediente precisa de hora de início e fim." }
+  }
 
   await db
     .update(alertSettings)
@@ -303,6 +364,8 @@ export async function salvarAjustes(entrada: {
       urgenteRepetirMinutos: urgente,
       aproximacaoRepetirMinutos: aproximacao,
       som: entrada.som,
+      expedienteInicio: entrada.expedienteInicio,
+      expedienteFim: entrada.expedienteFim,
     })
     .where(eq(alertSettings.id, 1))
   atualizarTelas()

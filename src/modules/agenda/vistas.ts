@@ -29,6 +29,7 @@ export type CompromissoView = {
   status: "marcado" | "feito" | "cancelado" | "apagada"
   repeticao: RepeticaoView
   repeteAte: string | null
+  tarefaOrigemId: number | null
   conflito: boolean
 }
 

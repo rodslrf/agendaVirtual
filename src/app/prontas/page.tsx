@@ -13,7 +13,7 @@ export default async function Prontas() {
   return (
     <>
       <div className="flex items-center justify-between gap-3">
-        <h1 className="text-3xl font-semibold tracking-tight">Prontas</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Prontas</h1>
         <Button render={<Link href="/lista" />} nativeButton={false} variant="outline" className="min-h-11">
           Voltar à lista
         </Button>

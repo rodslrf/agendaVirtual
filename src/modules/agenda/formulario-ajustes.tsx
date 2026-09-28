@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react"
 import { toast } from "sonner"
 import { salvarAjustes } from "@/modules/agenda/acoes"
+import { EscolherHora } from "@/modules/agenda/escolher-quando"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field"
@@ -43,11 +44,15 @@ export function FormularioAjustes({
   urgenteRepetirMinutos,
   aproximacaoRepetirMinutos,
   som,
+  expedienteInicio,
+  expedienteFim,
 }: {
   antecedenciasMinutos: string
   urgenteRepetirMinutos: number
   aproximacaoRepetirMinutos: number
   som: boolean
+  expedienteInicio: string
+  expedienteFim: string
 }) {
   const [antecedencias, setAntecedencias] = useState(avisosIniciais(antecedenciasMinutos))
   const [urgente, setUrgente] = useState(
@@ -57,6 +62,8 @@ export function FormularioAjustes({
     String(maisProximo(aproximacaoRepetirMinutos, REPETIR.map((item) => item.minutos))),
   )
   const [somLigado, setSomLigado] = useState(som)
+  const [inicio, setInicio] = useState(expedienteInicio || "08:00")
+  const [fim, setFim] = useState(expedienteFim || "18:00")
   const [pendente, iniciar] = useTransition()
 
   function salvar() {
@@ -66,6 +73,8 @@ export function FormularioAjustes({
         urgenteRepetirMinutos: Number(urgente),
         aproximacaoRepetirMinutos: Number(aproximacao),
         som: somLigado,
+        expedienteInicio: inicio,
+        expedienteFim: fim,
       })
       if (resultado.erro) toast.error(resultado.erro)
       else toast.success("Avisos atualizados")
@@ -83,6 +92,7 @@ export function FormularioAjustes({
             <FieldLabel>Antes do horário</FieldLabel>
             <ToggleGroup
               multiple
+              variant="outline"
               value={antecedencias}
               onValueChange={(valor) => valor.length > 0 && setAntecedencias(valor)}
               spacing={2}
@@ -99,6 +109,7 @@ export function FormularioAjustes({
           <Field>
             <FieldLabel>Urgente, lembrar de novo</FieldLabel>
             <ToggleGroup
+              variant="outline"
               value={[urgente]}
               onValueChange={(valor) => valor[0] && setUrgente(valor[0])}
               spacing={2}
@@ -115,6 +126,7 @@ export function FormularioAjustes({
           <Field>
             <FieldLabel>Prazo, lembrar de novo</FieldLabel>
             <ToggleGroup
+              variant="outline"
               value={[aproximacao]}
               onValueChange={(valor) => valor[0] && setAproximacao(valor[0])}
               spacing={2}
@@ -126,6 +138,14 @@ export function FormularioAjustes({
                 </ToggleGroupItem>
               ))}
             </ToggleGroup>
+          </Field>
+          <Field>
+            <FieldLabel>Expediente</FieldLabel>
+            <div className="flex gap-3">
+              <EscolherHora valor={inicio} aoMudar={setInicio} />
+              <EscolherHora valor={fim} aoMudar={setFim} />
+            </div>
+            <FieldDescription>Fora desse intervalo a grade fica cinza, mas ainda dá para marcar horário.</FieldDescription>
           </Field>
           <Field orientation="horizontal">
             <Switch id="som" checked={somLigado} onCheckedChange={setSomLigado} />

@@ -22,19 +22,23 @@ export function FormularioCompromisso({
   compromisso,
   dataInicial,
   horaInicial,
+  duracaoInicial,
 }: {
   aberto: boolean
   aoFechar: (aberto: boolean) => void
   compromisso?: CompromissoView
   dataInicial?: string
   horaInicial?: string
+  duracaoInicial?: number
 }) {
   const partes = partirDataHora(compromisso?.serieComecaEm ?? null)
   const [titulo, setTitulo] = useState(compromisso?.titulo ?? "")
   const [notas, setNotas] = useState(compromisso?.notas ?? "")
   const [data, setData] = useState(partes.data || dataInicial || "")
   const [hora, setHora] = useState(partes.hora || horaInicial || "")
-  const [duracao, setDuracao] = useState(String(compromisso?.duracaoValor ?? compromisso?.duracaoMinutos ?? 60))
+  const [duracao, setDuracao] = useState(
+    String(compromisso?.duracaoValor ?? compromisso?.duracaoMinutos ?? duracaoInicial ?? 60),
+  )
   const [unidade, setUnidade] = useState<UnidadeDuracao>(compromisso?.duracaoUnidade ?? "minuto")
   const [repeticao, setRepeticao] = useState<Repeticao>(compromisso?.repeticao ?? "nenhuma")
   const [repeteAte, setRepeteAte] = useState(partirDataHora(compromisso?.repeteAte ?? null).data)
@@ -131,6 +135,7 @@ export function FormularioCompromisso({
             className="min-h-11"
           />
           <ToggleGroup
+            variant="outline"
             value={[unidade]}
             onValueChange={(valor) => {
               const proxima = valor[0]
@@ -151,6 +156,7 @@ export function FormularioCompromisso({
         <Field>
           <FieldLabel>Repete</FieldLabel>
           <ToggleGroup
+            variant="outline"
             value={[repeticao]}
             onValueChange={(valor) => {
               if (valor[0]) setRepeticao(valor[0] as Repeticao)

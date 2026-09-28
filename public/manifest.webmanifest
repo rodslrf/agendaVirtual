@@ -1,10 +1,10 @@
 {
-  "name": "Agenda Online",
-  "short_name": "Agenda Online",
+  "name": "ROTINA Pro - LR CONT",
+  "short_name": "ROTINA Pro - LR CONT",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#f4fbfa",
-  "theme_color": "#0f766e",
+  "background_color": "#ffffff",
+  "theme_color": "#855F8C",
   "lang": "pt-BR",
   "icons": [
     {

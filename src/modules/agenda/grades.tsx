@@ -1,34 +1,35 @@
 import Link from "next/link"
-import { chaveDia, horaCurta, instanteCuiaba, partesCuiaba, somarDias } from "@/modules/agenda/tempo"
-import type { CompromissoView } from "@/modules/agenda/vistas"
+import { GradeHoraria } from "@/modules/agenda/grade-horaria"
+import { chaveDia, instanteCuiaba, partesCuiaba, somarDias } from "@/modules/agenda/tempo"
+import type { CompromissoView, TarefaView } from "@/modules/agenda/vistas"
+import { cn } from "cn"
 
-export function GradeSemana({ inicio, itens }: { inicio: Date; itens: CompromissoView[] }) {
-  const dias = Array.from({ length: 7 }, (_, indice) => somarDias(inicio, indice))
+export function GradeSemana({
+  inicio,
+  itens,
+  ancora,
+  tarefas = [],
+  expedienteInicio,
+  expedienteFim,
+}: {
+  inicio: Date
+  itens: CompromissoView[]
+  ancora: string
+  tarefas?: TarefaView[]
+  expedienteInicio?: string
+  expedienteFim?: string
+}) {
+  const dias = Array.from({ length: 7 }, (_, indice) => chaveDia(somarDias(inicio, indice)))
   return (
-    <div className="grid grid-cols-1 gap-2 md:grid-cols-7">
-      {dias.map((dia) => {
-        const chave = chaveDia(dia)
-        const doDia = itens.filter((item) => chaveDia(new Date(item.comecaEm)) === chave)
-        const nome = new Intl.DateTimeFormat("pt-BR", {
-          timeZone: "America/Cuiaba",
-          weekday: "short",
-          day: "numeric",
-        }).format(dia)
-        return (
-          <section key={chave} className="flex min-h-28 min-w-0 flex-col gap-2 rounded-xl bg-card p-2 ring-1 ring-foreground/10">
-            <Link href={`/agenda?vista=dia&data=${chave}`} className="truncate text-sm font-medium capitalize">
-              {nome}
-            </Link>
-            {doDia.map((item) => (
-              <p key={`${item.id}-${item.comecaEm}`} className="truncate rounded-md bg-primary px-2 py-1 text-xs text-primary-foreground">
-                {horaCurta(new Date(item.comecaEm))} {item.titulo}
-                {item.conflito ? " · Conflito" : ""}
-              </p>
-            ))}
-          </section>
-        )
-      })}
-    </div>
+    <GradeHoraria
+      dias={dias}
+      compromissos={itens}
+      ancora={ancora}
+      tarefas={tarefas}
+      preencher
+      expedienteInicio={expedienteInicio}
+      expedienteFim={expedienteFim}
+    />
   )
 }
 
@@ -37,10 +38,11 @@ export function GradeMes({ dia, itens }: { dia: Date; itens: CompromissoView[] }
   const primeiro = instanteDoMes(parte.ano, parte.mes)
   const inicio = somarDias(primeiro, -diaSemana(primeiro))
   const celulas = Array.from({ length: 42 }, (_, indice) => somarDias(inicio, indice))
+  const hoje = chaveDia(new Date())
   return (
-    <div className="grid grid-cols-7 gap-1">
+    <div className="grid grid-cols-7 border-t border-l border-border">
       {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"].map((nome) => (
-        <p key={nome} className="px-1 text-center text-xs text-muted-foreground">
+        <p key={nome} className="border-r border-b border-border px-2 py-1 text-center text-xs font-medium text-muted-foreground">
           {nome}
         </p>
       ))}
@@ -48,21 +50,31 @@ export function GradeMes({ dia, itens }: { dia: Date; itens: CompromissoView[] }
         const chave = chaveDia(data)
         const doMes = partesCuiaba(data).mes === parte.mes
         const doDia = itens.filter((item) => chaveDia(new Date(item.comecaEm)) === chave)
+        const atual = chave === hoje
         return (
           <Link
             key={chave}
             href={`/agenda?vista=dia&data=${chave}`}
-            className={`flex min-h-16 flex-col gap-1 rounded-lg p-1 text-xs ring-1 ring-foreground/10 ${
-              doMes ? "bg-card" : "text-muted-foreground"
-            }`}
+            className={cn(
+              "flex min-h-24 flex-col gap-1 border-r border-b border-border p-1 text-xs hover:bg-surface-hover",
+              !doMes && "text-muted-foreground",
+              atual && "bg-calendar-today-bg",
+            )}
           >
-            <span className="font-medium">{partesCuiaba(data).dia}</span>
+            <span
+              className={cn(
+                "flex size-7 items-center justify-center self-start font-medium",
+                atual && "rounded-full bg-primary text-primary-foreground",
+              )}
+            >
+              {partesCuiaba(data).dia}
+            </span>
             {doDia.slice(0, 2).map((item) => (
-              <span key={`${item.id}-${item.comecaEm}`} className="truncate rounded bg-primary px-1 text-primary-foreground">
+              <span key={`${item.id}-${item.comecaEm}`} className="calendar-event truncate text-center text-[11px] font-semibold">
                 {item.titulo}
               </span>
             ))}
-            {doDia.length > 2 ? <span>+{doDia.length - 2}</span> : null}
+            {doDia.length > 2 ? <span className="text-muted-foreground">+{doDia.length - 2} mais</span> : null}
           </Link>
         )
       })}
@@ -82,10 +94,10 @@ export function GradeAno({ dia, itens }: { dia: Date; itens: CompromissoView[] }
           <Link
             key={mes}
             href={`/agenda?vista=mes&data=${chaveDia(data)}`}
-            className="flex min-h-24 flex-col justify-between rounded-xl bg-card p-3 ring-1 ring-foreground/10"
+            className="flex min-h-24 flex-col justify-between rounded-md border border-border bg-card p-3 hover:bg-surface-hover"
           >
             <span className="text-sm font-medium capitalize">{nome}</span>
-            <span className="text-2xl font-semibold tabular-nums">{quantidade}</span>
+            <span className="text-2xl font-normal tabular-nums">{quantidade}</span>
           </Link>
         )
       })}

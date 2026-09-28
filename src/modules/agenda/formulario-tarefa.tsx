@@ -126,6 +126,7 @@ export function FormularioTarefa({
         <Field>
           <FieldLabel>Prioridade</FieldLabel>
           <ToggleGroup
+            variant="outline"
             value={[prioridade]}
             onValueChange={(valor) => {
               const proxima = valor[0]

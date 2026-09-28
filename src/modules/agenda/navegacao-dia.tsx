@@ -5,7 +5,7 @@ import { ptBR } from "date-fns/locale"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { acrescentarMinutos, chaveDia, diaDaChave, tituloDia } from "@/modules/agenda/tempo"
+import { acrescentarMinutos, chaveCalendario, dataDoCalendario, diaDaChave, tituloDia } from "@/modules/agenda/tempo"
 
 export function NavegacaoDia({ data }: { data: string }) {
   const roteador = useRouter()
@@ -13,7 +13,7 @@ export function NavegacaoDia({ data }: { data: string }) {
 
   function ir(destino: Date | undefined) {
     if (!destino) return
-    roteador.push(`/dia?data=${chaveDia(destino)}`)
+    roteador.push(`/dia?data=${chaveCalendario(destino)}`)
   }
 
   return (
@@ -31,7 +31,7 @@ export function NavegacaoDia({ data }: { data: string }) {
           {tituloDia(dia)}
         </PopoverTrigger>
         <PopoverContent>
-          <Calendar mode="single" selected={dia} onSelect={ir} locale={ptBR} />
+          <Calendar mode="single" selected={dataDoCalendario(data)} onSelect={ir} locale={ptBR} />
         </PopoverContent>
       </Popover>
       <Button

@@ -7,10 +7,26 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-jakarta);
+  --font-sans: "Segoe UI", var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono);
   --font-heading: var(--font-sans);
   --color-aviso: var(--aviso);
+  --color-brand: var(--brand);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-pressed: var(--primary-pressed);
+  --color-primary-subtle: var(--primary-subtle);
+  --color-primary-selected: var(--primary-selected);
+  --color-surface-hover: var(--surface-hover);
+  --color-calendar-grid-line: var(--calendar-grid-line);
+  --color-calendar-grid-line-subtle: var(--calendar-grid-line-subtle);
+  --color-calendar-today-bg: var(--calendar-today-bg);
+  --color-calendar-event-bg: var(--calendar-event-bg);
+  --color-calendar-event-border: var(--calendar-event-border);
+  --color-calendar-event-text: var(--calendar-event-text);
+  --color-calendar-event-hover: var(--calendar-event-hover);
+  --color-calendar-event-selected: var(--calendar-event-selected);
+  --color-calendar-current-time: var(--calendar-current-time);
+  --color-calendar-off-hours: var(--calendar-off-hours);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -40,95 +56,142 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-2xl: 16px;
+  --radius-3xl: 20px;
+  --radius-4xl: 24px;
 }
 
 :root {
-  --background: #f4fbfa;
-  --foreground: #134e4a;
+  --background: #ffffff;
+  --foreground: #29242b;
   --card: #ffffff;
-  --card-foreground: #134e4a;
+  --card-foreground: #29242b;
   --popover: #ffffff;
-  --popover-foreground: #134e4a;
-  --primary: #0f766e;
+  --popover-foreground: #29242b;
+  --primary: #855f8c;
   --primary-foreground: #ffffff;
-  --secondary: #e7f5f3;
-  --secondary-foreground: #134e4a;
-  --muted: #eef6f5;
-  --muted-foreground: #3f6f6a;
-  --accent: #fff4ed;
-  --accent-foreground: #9a3412;
-  --destructive: #dc2626;
-  --aviso: #ea580c;
-  --border: #d5ebe7;
-  --input: #d5ebe7;
-  --ring: #0f766e;
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --brand: #a47dab;
+  --primary-hover: #764f7e;
+  --primary-pressed: #684371;
+  --primary-subtle: #f3ecf5;
+  --primary-selected: #e9dcee;
+  --primary-border: #cdb8d2;
+  --surface-hover: #f7f4f8;
+  --secondary: #f3ecf5;
+  --secondary-foreground: #29242b;
+  --muted: #faf8fb;
+  --muted-foreground: #5f5662;
+  --accent: #f3ecf5;
+  --accent-foreground: #29242b;
+  --destructive: #b95c67;
+  --aviso: #c47a3d;
+  --border: #e5e1e7;
+  --input: #e5e1e7;
+  --ring: #855f8c;
+  --chart-1: #a47dab;
+  --chart-2: #4778b8;
+  --chart-3: #4f8a70;
+  --chart-4: #c47a3d;
+  --chart-5: #b95c67;
+  --radius: 6px;
+  --sidebar: #faf8fb;
+  --sidebar-foreground: #29242b;
+  --sidebar-primary: #855f8c;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f3ecf5;
+  --sidebar-accent-foreground: #29242b;
+  --sidebar-border: #e5e1e7;
+  --sidebar-ring: #855f8c;
+  --calendar-grid-line: #c9c2ce;
+  --calendar-grid-line-subtle: #ddd7e2;
+  --calendar-today-bg: #f4ebf7;
+  --calendar-event-bg: #d9c4e0;
+  --calendar-event-border: #6f4d77;
+  --calendar-event-text: #241828;
+  --calendar-event-hover: #cdb4d6;
+  --calendar-event-selected: #c3a6cd;
+  --calendar-current-time: #c42e62;
+  --calendar-off-hours: #eeeaf1;
+  --calendar-hour-height: 60px;
+  --calendar-time-column-width: 64px;
+  --calendar-snap-minutes: 15;
+  --app-bar-height: 48px;
+  --sidebar-width: 260px;
+  --shadow-popover: 0 8px 24px rgba(41, 36, 43, 0.14);
+  --shadow-drag: 0 8px 20px rgba(41, 36, 43, 0.2);
 }
 
 .dark {
-  --background: #102421;
-  --foreground: #e7f5f3;
-  --card: #17302c;
-  --card-foreground: #e7f5f3;
-  --popover: #17302c;
-  --popover-foreground: #e7f5f3;
-  --primary: #2dd4bf;
-  --primary-foreground: #042f2e;
-  --secondary: #1e3a36;
-  --secondary-foreground: #e7f5f3;
-  --muted: #1e3a36;
-  --muted-foreground: #a7cfc8;
-  --accent: #3b2418;
-  --accent-foreground: #fdba74;
-  --destructive: #f87171;
-  --aviso: #ea580c;
-  --border: #2a4a45;
-  --input: #2a4a45;
-  --ring: #2dd4bf;
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --background: #1c181e;
+  --foreground: #f3ecf5;
+  --card: #241f26;
+  --card-foreground: #f3ecf5;
+  --popover: #241f26;
+  --popover-foreground: #f3ecf5;
+  --primary: #c4a8cb;
+  --primary-foreground: #29242b;
+  --brand: #a47dab;
+  --primary-hover: #d4bcd9;
+  --primary-pressed: #b899c0;
+  --primary-subtle: #2e2832;
+  --primary-selected: #3a2e40;
+  --primary-border: #684371;
+  --surface-hover: #2e2832;
+  --secondary: #2e2832;
+  --secondary-foreground: #f3ecf5;
+  --muted: #2e2832;
+  --muted-foreground: #b8afc0;
+  --accent: #2e2832;
+  --accent-foreground: #f3ecf5;
+  --destructive: #d98991;
+  --aviso: #c47a3d;
+  --border: #3a3340;
+  --input: #3a3340;
+  --ring: #c4a8cb;
+  --chart-1: #a47dab;
+  --chart-2: #4778b8;
+  --chart-3: #4f8a70;
+  --chart-4: #c47a3d;
+  --chart-5: #b95c67;
+  --sidebar: #221c24;
+  --sidebar-foreground: #f3ecf5;
+  --sidebar-primary: #c4a8cb;
+  --sidebar-primary-foreground: #29242b;
+  --sidebar-accent: #2e2832;
+  --sidebar-accent-foreground: #f3ecf5;
+  --sidebar-border: #3a3340;
+  --sidebar-ring: #c4a8cb;
+  --calendar-grid-line: #3a3340;
+  --calendar-grid-line-subtle: #2e2832;
+  --calendar-today-bg: #2a2230;
+  --calendar-event-bg: #3a2e40;
+  --calendar-event-border: #c4a8cb;
+  --calendar-event-text: #f3ecf5;
+  --calendar-event-hover: #463850;
+  --calendar-event-selected: #52405c;
+  --calendar-current-time: #d84c7a;
+  --calendar-off-hours: #1a161d;
+  --shadow-popover: 0 8px 24px rgba(0, 0, 0, 0.4);
+  --shadow-drag: 0 8px 20px rgba(0, 0, 0, 0.45);
 }
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border;
   }
   body {
     @apply bg-background text-foreground;
   }
   html {
     @apply font-sans;
+  }
+  :focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
   }
 }
 
@@ -154,7 +217,7 @@
 
 .agenda-scroll {
   scrollbar-width: thin;
-  scrollbar-color: #2dd4bf transparent;
+  scrollbar-color: var(--primary) transparent;
 }
 
 .agenda-scroll::-webkit-scrollbar {
@@ -166,6 +229,23 @@
 }
 
 .agenda-scroll::-webkit-scrollbar-thumb {
-  background: #0f766e;
+  background: var(--primary);
   border-radius: 999px;
+}
+
+.agenda-gutter {
+  scrollbar-gutter: stable;
+}
+
+.calendar-event {
+  background: var(--calendar-event-bg);
+  color: var(--calendar-event-text);
+  border-left: 3px solid var(--calendar-event-border);
+  border-radius: var(--radius-sm);
+  padding: 4px 6px;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--calendar-event-border) 28%, transparent);
+}
+
+.calendar-event:hover {
+  background: var(--calendar-event-hover);
 }

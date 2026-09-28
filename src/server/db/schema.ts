@@ -60,6 +60,7 @@ export const compromissos = mysqlTable("compromissos", {
     .notNull()
     .default("nenhuma"),
   repeteAte: datetime("repete_ate", { mode: "date", fsp: 0 }),
+  tarefaOrigemId: int("tarefa_origem_id"),
   criadaEm: datetime("criada_em", { mode: "date", fsp: 0 }).notNull(),
   atualizadaEm: datetime("atualizada_em", { mode: "date", fsp: 0 }).notNull(),
 })
@@ -82,6 +83,8 @@ export const alertSettings = mysqlTable("alert_settings", {
   urgenteRepetirMinutos: int("urgente_repetir_minutos").notNull(),
   aproximacaoRepetirMinutos: int("aproximacao_repetir_minutos").notNull(),
   som: boolean("som").notNull().default(true),
+  expedienteInicio: varchar("expediente_inicio", { length: 5 }).notNull().default("08:00"),
+  expedienteFim: varchar("expediente_fim", { length: 5 }).notNull().default("18:00"),
 })
 
 export const notificacoes = mysqlTable(

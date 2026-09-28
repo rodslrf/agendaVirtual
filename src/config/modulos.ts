@@ -1,7 +1,7 @@
 export const modulos = [
   {
     id: "agenda",
-    nome: "Agenda Online",
+    nome: "ROTINA Pro - LR CONT",
     href: "/",
     itens: [
       { href: "/", nome: "Hoje" },
