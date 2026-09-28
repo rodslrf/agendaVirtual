@@ -45,6 +45,36 @@ function comNovaTentativa<T>(rodar: () => Promise<T>) {
   })()
 }
 
+function colunaJaExiste(erro: unknown): boolean {
+  if (!erro || typeof erro !== "object") return false
+  if ("errno" in erro && Number(erro.errno) === 1060) return true
+  if ("cause" in erro) return colunaJaExiste(erro.cause)
+  return false
+}
+
+let colunasProntas: Promise<void> | undefined
+
+function garantirColunas(consultar: mysql.Pool["query"]) {
+  colunasProntas ??= (async () => {
+    const comandos = [
+      "ALTER TABLE `alert_settings` ADD `expediente_inicio` varchar(5) NOT NULL DEFAULT '08:00'",
+      "ALTER TABLE `alert_settings` ADD `expediente_fim` varchar(5) NOT NULL DEFAULT '18:00'",
+      "ALTER TABLE `compromissos` ADD `tarefa_origem_id` int",
+    ]
+    for (const sql of comandos) {
+      try {
+        await consultar(sql)
+      } catch (erro) {
+        if (!colunaJaExiste(erro)) throw erro
+      }
+    }
+  })().catch((erro: unknown) => {
+    colunasProntas = undefined
+    throw erro
+  })
+  return colunasProntas
+}
+
 export function getPool() {
   // O datetime do Drizzle entra e sai em UTC. A tela mostra em America/Cuiaba.
   // O MySQL gratuito deixa uma conexão. Não segure ela entre consultas.
@@ -53,9 +83,15 @@ export function getPool() {
     const consultar = pool.query.bind(pool)
     const executar = pool.execute.bind(pool)
     pool.query = ((...argumentos: Parameters<typeof pool.query>) =>
-      comNovaTentativa(() => consultar(...argumentos))) as typeof pool.query
+      comNovaTentativa(async () => {
+        await garantirColunas(consultar)
+        return consultar(...argumentos)
+      })) as typeof pool.query
     pool.execute = ((...argumentos: Parameters<typeof pool.execute>) =>
-      comNovaTentativa(() => executar(...argumentos))) as typeof pool.execute
+      comNovaTentativa(async () => {
+        await garantirColunas(consultar)
+        return executar(...argumentos)
+      })) as typeof pool.execute
     globalForDb.pool = pool
   }
   return globalForDb.pool

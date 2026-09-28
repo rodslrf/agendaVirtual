@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState, useSyncExternalStore, useTransition } from "react"
+import { createPortal } from "react-dom"
 import { toast } from "sonner"
 import { cn } from "cn"
 import { chaveDia, diaDaChave, horaCurta, partesCuiaba, textoQuando } from "@/modules/agenda/tempo"
@@ -49,6 +50,11 @@ type Gesto =
       origemDia: string
       origemInicio: number
       arrastou: boolean
+      x: number
+      y: number
+      largura: number
+      offsetX: number
+      offsetY: number
     }
   | {
       tipo: "redimensionar"
@@ -57,7 +63,13 @@ type Gesto =
       dia: string
       inicioMin: number
       duracao: number
+      origemInicio: number
+      origemDuracao: number
+      x: number
+      y: number
     }
+
+type Pouso = { id: number; dia: string; inicioMin: number; duracao: number }
 
 type Composicao = {
   data: string
@@ -91,6 +103,7 @@ export function GradeHoraria({
   const [novo, setNovo] = useState<{ data: string; hora: string; duracaoMinutos: number } | null>(null)
   const [composicao, setComposicao] = useState<Composicao | null>(null)
   const [gesto, setGesto] = useState<Gesto | null>(null)
+  const [pouso, setPouso] = useState<Pouso | null>(null)
   const rolagem = useRef<HTMLDivElement>(null)
   const grade = useRef<HTMLDivElement>(null)
   const gestoRef = useRef<Gesto | null>(null)
@@ -128,6 +141,12 @@ export function GradeHoraria({
       }
       if (atual.tipo === "mover" && !atual.arrastou) return
       if (atual.tipo === "mover" || atual.tipo === "redimensionar") {
+        const igual =
+          atual.tipo === "mover"
+            ? atual.dia === atual.origemDia && atual.inicioMin === atual.origemInicio
+            : atual.inicioMin === atual.origemInicio && atual.duracao === atual.origemDuracao
+        if (igual) return
+        setPouso({ id: atual.id, dia: atual.dia, inicioMin: atual.inicioMin, duracao: atual.duracao })
         const hora = horarioDoMinuto(atual.inicioMin).texto
         void moverCompromisso({
           id: atual.id,
@@ -135,7 +154,10 @@ export function GradeHoraria({
           hora,
           duracaoMinutos: atual.duracao,
         }).then((resultado) => {
-          if (resultado.erro) toast.error(resultado.erro)
+          if (resultado.erro) {
+            toast.error(resultado.erro)
+            setPouso(null)
+          }
         })
       }
     }
@@ -162,6 +184,30 @@ export function GradeHoraria({
     window.addEventListener("keydown", tecla)
     return () => window.removeEventListener("keydown", tecla)
   }, [gesto])
+
+  useEffect(() => {
+    if (!gesto || (gesto.tipo !== "mover" && gesto.tipo !== "redimensionar")) return
+    const anterior = document.body.style.cursor
+    document.body.style.cursor = gesto.tipo === "mover" ? "grabbing" : "ns-resize"
+    return () => {
+      document.body.style.cursor = anterior
+    }
+  }, [gesto])
+
+  useEffect(() => {
+    if (!pouso) return
+    const item = compromissos.find((entrada) => entrada.id === pouso.id)
+    if (!item) return
+    const parte = partesCuiaba(new Date(item.comecaEm))
+    const inicio = minutosDoHorario(parte.hora, parte.minuto)
+    if (
+      chaveDia(new Date(item.comecaEm)) === pouso.dia &&
+      inicio === pouso.inicioMin &&
+      item.duracaoMinutos === pouso.duracao
+    ) {
+      setPouso(null)
+    }
+  }, [compromissos, pouso])
 
   const altura = ORDEM_HORAS.length * ALTURA_HORA
   const ligados = new Set(
@@ -209,7 +255,7 @@ export function GradeHoraria({
               key={chave}
               dia={chave}
               ehHoje={chave === hoje}
-              compromissos={compromissosDaColuna(chave, compromissos, gesto)}
+              compromissos={compromissosDaColuna(chave, compromissos, gesto, pouso)}
               tarefas={tarefas.filter(
                 (tarefa) =>
                   !ligados.has(tarefa.id) &&
@@ -217,6 +263,7 @@ export function GradeHoraria({
                   chaveDia(new Date(tarefa.venceEm)) === chave,
               )}
               gesto={gesto}
+              pouso={pouso}
               expedienteInicio={expedienteInicio}
               expedienteFim={expedienteFim}
               aoCriar={(evento) => iniciarCriacao(evento, chave, comecarGesto)}
@@ -265,6 +312,15 @@ export function GradeHoraria({
           duracaoInicial={novo.duracaoMinutos}
         />
       ) : null}
+      {gesto?.tipo === "mover" && gesto.arrastou
+        ? createPortal(
+            <CloneArraste gesto={gesto} compromisso={compromissos.find((item) => item.id === gesto.id)} />,
+            document.body,
+          )
+        : null}
+      {gesto?.tipo === "redimensionar"
+        ? createPortal(<BadgeDuracao gesto={gesto} />, document.body)
+        : null}
     </div>
   )
 }
@@ -315,30 +371,40 @@ function atualizarGesto(atual: Gesto | null, evento: PointerEvent, raiz: HTMLDiv
     }
   }
   if (atual.tipo === "mover") {
-    if (minutos == null) return atual
-    const inicio = encaixarMinutos(minutos - atual.offsetMin)
+    const seguindo = { ...atual, x: evento.clientX, y: evento.clientY }
+    if (minutos == null) return seguindo
+    const limite = ORDEM_HORAS.length * 60 - atual.duracao
+    const inicio = Math.max(0, Math.min(encaixarMinutos(minutos - atual.offsetMin), limite))
     const dia = coluna?.dataset.dia ?? atual.dia
     const arrastou = atual.arrastou || dia !== atual.origemDia || inicio !== atual.origemInicio
-    return { ...atual, dia, inicioMin: inicio, arrastou }
+    return { ...seguindo, dia, inicioMin: inicio, arrastou }
   }
   if (atual.tipo === "redimensionar") {
-    if (minutos == null) return atual
+    const seguindo = { ...atual, x: evento.clientX, y: evento.clientY }
+    if (minutos == null) return seguindo
     if (atual.borda === "inicio") {
-      const fim = atual.inicioMin + atual.duracao
+      const fim = atual.origemInicio + atual.origemDuracao
       const inicio = Math.min(minutos, fim - SNAP_MINUTOS)
-      return { ...atual, inicioMin: inicio, duracao: fim - inicio }
+      return { ...seguindo, inicioMin: inicio, duracao: fim - inicio }
     }
     const duracao = Math.max(SNAP_MINUTOS, minutos - atual.inicioMin)
-    return { ...atual, duracao }
+    return { ...seguindo, duracao }
   }
   return atual
 }
 
-function compromissosDaColuna(chave: string, compromissos: CompromissoView[], gesto: Gesto | null) {
+function compromissosDaColuna(
+  chave: string,
+  compromissos: CompromissoView[],
+  gesto: Gesto | null,
+  pouso: Pouso | null,
+) {
   return compromissos.filter((item) => {
-    if (gesto && (gesto.tipo === "mover" || gesto.tipo === "redimensionar") && gesto.id === item.id) {
-      return gesto.dia === chave
+    if (gesto?.tipo === "mover" && gesto.id === item.id) {
+      return chaveDia(new Date(item.comecaEm)) === chave
     }
+    if (gesto?.tipo === "redimensionar" && gesto.id === item.id) return gesto.dia === chave
+    if (pouso?.id === item.id) return pouso.dia === chave
     return !ehDiaInteiro(item) && chaveDia(new Date(item.comecaEm)) === chave
   })
 }
@@ -457,6 +523,7 @@ function ColunaHoraria({
   compromissos,
   tarefas,
   gesto,
+  pouso,
   expedienteInicio,
   expedienteFim,
   aoCriar,
@@ -468,6 +535,7 @@ function ColunaHoraria({
   compromissos: CompromissoView[]
   tarefas: TarefaView[]
   gesto: Gesto | null
+  pouso: Pouso | null
   expedienteInicio: string
   expedienteFim: string
   aoCriar: (evento: React.PointerEvent<HTMLElement>) => void
@@ -536,24 +604,37 @@ function ColunaHoraria({
           }}
         />
       ) : null}
+      {gesto?.tipo === "mover" && gesto.arrastou && gesto.dia === dia ? (
+        <div
+          className="pointer-events-none absolute inset-x-1 z-[1] rounded-sm border border-dashed border-[#a47dab] bg-[rgba(164,125,171,0.15)]"
+          style={{
+            top: (gesto.inicioMin / 60) * ALTURA_HORA,
+            height: (gesto.duracao / 60) * ALTURA_HORA,
+          }}
+        />
+      ) : null}
       {compromissos.map((item) => {
-        const preview = gesto && (gesto.tipo === "mover" || gesto.tipo === "redimensionar") && gesto.id === item.id
-        const inicioMin = preview ? gesto.inicioMin : minutosDoHorario(partesCuiaba(new Date(item.comecaEm)).hora, partesCuiaba(new Date(item.comecaEm)).minuto)
-        const duracao = preview ? gesto.duracao : item.duracaoMinutos
+        const redim = gesto?.tipo === "redimensionar" && gesto.id === item.id ? gesto : null
+        const pousado = !redim && pouso?.id === item.id && pouso.dia === dia ? pouso : null
+        const parteItem = partesCuiaba(new Date(item.comecaEm))
+        const inicioMin = redim?.inicioMin ?? pousado?.inicioMin ?? minutosDoHorario(parteItem.hora, parteItem.minuto)
+        const duracao = redim?.duracao ?? pousado?.duracao ?? item.duracaoMinutos
+        const movendo = gesto?.tipo === "mover" && gesto.id === item.id && gesto.arrastou
         return (
           <div
             key={`${item.id}-${item.comecaEm}`}
-            className="absolute z-[1] min-w-0 px-px"
+            className={cn("absolute z-[1] min-w-0 px-px", !redim && "transition-[top,height] duration-100 ease-out")}
             style={{
               top: (inicioMin / 60) * ALTURA_HORA,
-              height: Math.max(4, (duracao / 60) * ALTURA_HORA - 2),
+              height: Math.max(15, (duracao / 60) * ALTURA_HORA - 2),
               left: `calc((100% * ${coluna.get(item.id)!} + 2px) / ${colunas})`,
               width: `calc((100% - ${(colunas - 1) * 2}px) / ${colunas})`,
             }}
           >
             <BlocoHorario
               compromisso={item}
-              arrastando={Boolean(preview && gesto.tipo === "mover" && gesto.arrastou)}
+              arrastando={movendo}
+              redimensionando={Boolean(redim)}
               aoGesto={aoMover}
             />
           </div>
@@ -587,10 +668,12 @@ function MarcadorTarefa({ tarefa }: { tarefa: TarefaView }) {
 function BlocoHorario({
   compromisso,
   arrastando,
+  redimensionando,
   aoGesto,
 }: {
   compromisso: CompromissoView
   arrastando: boolean
+  redimensionando: boolean
   aoGesto: (gesto: Gesto) => void
 }) {
   const [aberto, setAberto] = useState(false)
@@ -608,8 +691,9 @@ function BlocoHorario({
   function comecarMover(evento: React.PointerEvent) {
     if (evento.button !== 0 || encerrado) return
     evento.stopPropagation()
-    const retangulo = evento.currentTarget.parentElement?.parentElement?.getBoundingClientRect()
-    const minutos = retangulo ? minutosNoPonto(evento.clientY, retangulo.top) : inicioMin
+    const coluna = evento.currentTarget.closest("[data-dia]")
+    const topo = coluna?.getBoundingClientRect().top
+    const minutos = topo == null ? inicioMin : minutosNoPonto(evento.clientY, topo)
     const origem = { x: evento.clientX, y: evento.clientY }
     function soltar(proximo: PointerEvent) {
       const distancia = Math.hypot(proximo.clientX - origem.x, proximo.clientY - origem.y)
@@ -617,6 +701,7 @@ function BlocoHorario({
       window.removeEventListener("pointerup", soltar)
     }
     window.addEventListener("pointerup", soltar)
+    const cartao = evento.currentTarget.getBoundingClientRect()
     aoGesto({
       tipo: "mover",
       id: compromisso.id,
@@ -627,6 +712,11 @@ function BlocoHorario({
       origemDia: chaveDia(inicio),
       origemInicio: inicioMin,
       arrastou: false,
+      x: evento.clientX,
+      y: evento.clientY,
+      largura: cartao.width,
+      offsetX: evento.clientX - cartao.left,
+      offsetY: evento.clientY - cartao.top,
     })
   }
 
@@ -640,18 +730,22 @@ function BlocoHorario({
       dia: chaveDia(inicio),
       inicioMin,
       duracao: compromisso.duracaoMinutos,
+      origemInicio: inicioMin,
+      origemDuracao: compromisso.duracaoMinutos,
+      x: evento.clientX,
+      y: evento.clientY,
     })
   }
 
   return (
-    <div className={cn("relative h-full min-h-0", arrastando && "opacity-50")}>
+    <div className={cn("relative h-full min-h-0", arrastando && "pointer-events-none opacity-40")}>
       <button
         type="button"
         className={cn(
-          "flex h-full w-full min-h-[18px] flex-col items-center justify-center overflow-hidden text-center",
+          "flex h-full w-full min-h-[15px] cursor-grab flex-col items-center justify-center overflow-hidden text-center active:cursor-grabbing",
           curto && "!px-1.5 !py-0",
-          encerrado ? "rounded-sm bg-muted px-1.5 py-0.5 text-muted-foreground line-through" : "calendar-event",
-          arrastando && "shadow-[var(--shadow-drag)]",
+          redimensionando && "opacity-50",
+          encerrado ? "cursor-default rounded-sm bg-muted px-1.5 py-0.5 text-muted-foreground line-through" : "calendar-event",
         )}
         onPointerDown={comecarMover}
         onClick={(evento) => {
@@ -681,13 +775,11 @@ function BlocoHorario({
       {encerrado ? null : (
         <>
           <span
-            className="absolute inset-x-0 top-0 z-[2] h-2 cursor-ns-resize touch-none sm:h-2"
-            style={{ minHeight: 12 }}
+            className="absolute inset-x-0 -top-0.5 z-[2] h-1.5 cursor-ns-resize touch-none"
             onPointerDown={(evento) => comecarRedimensionar(evento, "inicio")}
           />
           <span
-            className="absolute inset-x-0 bottom-0 z-[2] h-2 cursor-ns-resize touch-none"
-            style={{ minHeight: 12 }}
+            className="absolute inset-x-0 -bottom-0.5 z-[2] h-1.5 cursor-ns-resize touch-none"
             onPointerDown={(evento) => comecarRedimensionar(evento, "fim")}
           />
         </>
@@ -714,6 +806,49 @@ function IndicadorAgora() {
       <span className="absolute inset-x-0 top-0 h-0.5 bg-calendar-current-time" />
     </div>
   )
+}
+
+function CloneArraste({
+  gesto,
+  compromisso,
+}: {
+  gesto: Extract<Gesto, { tipo: "mover" }>
+  compromisso: CompromissoView | undefined
+}) {
+  if (!compromisso) return null
+  return (
+    <div
+      className="calendar-event pointer-events-none fixed z-[70] flex origin-center scale-[1.02] flex-col items-center justify-center overflow-hidden text-center shadow-[0_12px_24px_rgba(0,0,0,0.2)]"
+      style={{
+        left: gesto.x - gesto.offsetX,
+        top: gesto.y - gesto.offsetY,
+        width: gesto.largura,
+        height: Math.max(15, (gesto.duracao / 60) * ALTURA_HORA - 2),
+      }}
+    >
+      <span className="truncate px-1 text-[12px] leading-none">{compromisso.titulo}</span>
+    </div>
+  )
+}
+
+function BadgeDuracao({ gesto }: { gesto: Extract<Gesto, { tipo: "redimensionar" }> }) {
+  const inicio = horarioDoMinuto(gesto.inicioMin).texto
+  const fim = horarioDoMinuto(gesto.inicioMin + gesto.duracao).texto
+  return (
+    <div
+      className="pointer-events-none fixed z-[80] rounded bg-[#29242b] px-2 py-1 text-xs text-white"
+      style={{ left: gesto.x + 14, top: gesto.y + 14 }}
+    >
+      {inicio} – {fim} ({textoEnxuto(gesto.duracao)})
+    </div>
+  )
+}
+
+function textoEnxuto(minutos: number) {
+  if (minutos < 60) return `${minutos}m`
+  const horas = Math.floor(minutos / 60)
+  const resto = minutos % 60
+  return resto ? `${horas}h ${resto}m` : `${horas}h`
 }
 
 function ehDiaInteiro(item: CompromissoView) {
