@@ -2,16 +2,19 @@ const MINUTO = 60_000
 const FUSO = "America/Cuiaba"
 const FUSO_MINUTOS = -4 * 60
 
+// Recriar Intl a cada chamada travava o event loop (avisos/grade).
+const formatadorCuiaba = new Intl.DateTimeFormat("en-US", {
+  timeZone: FUSO,
+  hourCycle: "h23",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+})
+
 export function partesCuiaba(data: Date) {
-  const partes = new Intl.DateTimeFormat("en-US", {
-    timeZone: FUSO,
-    hourCycle: "h23",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).formatToParts(data)
+  const partes = formatadorCuiaba.formatToParts(data)
   const ler = (tipo: Intl.DateTimeFormatPartTypes) =>
     Number(partes.find((parte) => parte.type === tipo)?.value ?? "0")
   const hora = ler("hour")

@@ -45,8 +45,29 @@ export function Casca({
         >
           <MenuIcon />
         </Button>
-        <p className="min-w-0 truncate text-[20px] font-semibold tracking-tight text-foreground">{modulos[0].nome}</p>
+        <p className="min-w-0 truncate text-[20px] font-semibold tracking-tight text-primary">{modulos[0].nome}</p>
         <div className="ml-auto flex items-center gap-1">
+          <nav className="mr-1 hidden items-center gap-0.5 sm:flex" aria-label="Atalhos">
+            {itens.map((item) => {
+              const Icone = icones[item.href]
+              return (
+                <Button
+                  key={item.href}
+                  render={<Link href={item.href} />}
+                  nativeButton={false}
+                  variant="ghost"
+                  size="sm"
+                  className={cn(
+                    "h-8 gap-1.5 px-2.5",
+                    ativo(caminho, item.href) && "bg-primary-selected text-foreground",
+                  )}
+                >
+                  <Icone className="size-4" />
+                  {item.nome}
+                </Button>
+              )
+            })}
+          </nav>
           <InterruptorTema inicial={temaEscuro} />
           <Button
             render={<Link href="/ajustes" />}

@@ -14,21 +14,29 @@ export function PainelAviso() {
 
   useEffect(() => {
     let ativo = true
+    let emVoo = false
     async function carregar() {
-      const resposta = await fetch("/api/avisos/pendentes")
-      if (!resposta.ok || !ativo) return
-      const corpo = (await resposta.json()) as { som: boolean; avisos: AvisoVisivel[] }
-      if (!ativo) return
-      setSom(corpo.som)
-      setAvisos(corpo.avisos)
+      if (emVoo) return
+      emVoo = true
+      try {
+        const resposta = await fetch("/api/avisos/pendentes")
+        if (!resposta.ok || !ativo) return
+        const corpo = (await resposta.json()) as { som: boolean; avisos: AvisoVisivel[] }
+        if (!ativo) return
+        setSom(corpo.som)
+        setAvisos(corpo.avisos)
+      } finally {
+        emVoo = false
+      }
     }
-    carregar()
-    const relogio = window.setInterval(carregar, 20_000)
-    window.addEventListener("focus", carregar)
+    void carregar()
+    const relogio = window.setInterval(() => void carregar(), 20_000)
+    const noFoco = () => void carregar()
+    window.addEventListener("focus", noFoco)
     return () => {
       ativo = false
       window.clearInterval(relogio)
-      window.removeEventListener("focus", carregar)
+      window.removeEventListener("focus", noFoco)
     }
   }, [])
 

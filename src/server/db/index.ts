@@ -2,25 +2,34 @@ import { drizzle } from "drizzle-orm/mysql2"
 import mysql from "mysql2/promise"
 import * as schema from "./schema"
 
-const globalForDb = globalThis as unknown as { pool?: mysql.Pool }
+const globalForDb = globalThis as unknown as {
+  pool?: mysql.Pool
+  colunasProntas?: Promise<void>
+}
+
+function hostLocal(host: string) {
+  return host === "127.0.0.1" || host === "localhost" || host === "::1"
+}
 
 function configDoBanco() {
   const bruta = process.env.DATABASE_URL
   if (!bruta) throw new Error("DATABASE_URL não definida")
   const url = new URL(bruta)
+  // MySQL gratuito remoto: 1 conexão. Laragon/local aguenta várias em paralelo.
+  const local = hostLocal(url.hostname)
   return {
     host: url.hostname,
     port: Number(url.port || 3306),
     user: decodeURIComponent(url.username),
     password: decodeURIComponent(url.password),
     database: url.pathname.replace(/^\//, ""),
-    connectionLimit: 1,
-    maxIdle: 0,
-    idleTimeout: 1000,
-    enableKeepAlive: false,
+    connectionLimit: local ? 8 : 1,
+    maxIdle: local ? 4 : 0,
+    idleTimeout: local ? 10_000 : 1000,
+    enableKeepAlive: local,
     connectTimeout: 10000,
     waitForConnections: true,
-    queueLimit: 20,
+    queueLimit: local ? 50 : 20,
   }
 }
 
@@ -33,12 +42,12 @@ function codigoConexao(erro: unknown): number {
 
 function comNovaTentativa<T>(rodar: () => Promise<T>) {
   return (async () => {
-    for (let tentativa = 0; tentativa < 12; tentativa++) {
+    for (let tentativa = 0; tentativa < 4; tentativa++) {
       try {
         return await rodar()
       } catch (erro) {
-        if (codigoConexao(erro) !== 1203 || tentativa === 11) throw erro
-        await new Promise((resolver) => setTimeout(resolver, 500 * (tentativa + 1)))
+        if (codigoConexao(erro) !== 1203 || tentativa === 3) throw erro
+        await new Promise((resolver) => setTimeout(resolver, 200 * (tentativa + 1)))
       }
     }
     throw new Error("banco ocupado")
@@ -52,16 +61,24 @@ function colunaJaExiste(erro: unknown): boolean {
   return false
 }
 
-let colunasProntas: Promise<void> | undefined
-
 function garantirColunas(consultar: mysql.Pool["query"]) {
-  colunasProntas ??= (async () => {
-    const comandos = [
-      "ALTER TABLE `alert_settings` ADD `expediente_inicio` varchar(5) NOT NULL DEFAULT '08:00'",
-      "ALTER TABLE `alert_settings` ADD `expediente_fim` varchar(5) NOT NULL DEFAULT '18:00'",
-      "ALTER TABLE `compromissos` ADD `tarefa_origem_id` int",
+  // globalThis: HMR do Next não pode rearmar ALTER em toda troca de módulo.
+  globalForDb.colunasProntas ??= (async () => {
+    const faltando = async (tabela: string, coluna: string) => {
+      const [linhas] = (await consultar(
+        `SELECT 1 AS ok FROM INFORMATION_SCHEMA.COLUMNS
+         WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ? LIMIT 1`,
+        [tabela, coluna],
+      )) as [{ ok: number }[], unknown]
+      return !Array.isArray(linhas) || linhas.length === 0
+    }
+    const comandos: Array<[string, string, string]> = [
+      ["alert_settings", "expediente_inicio", "ALTER TABLE `alert_settings` ADD `expediente_inicio` varchar(5) NOT NULL DEFAULT '08:00'"],
+      ["alert_settings", "expediente_fim", "ALTER TABLE `alert_settings` ADD `expediente_fim` varchar(5) NOT NULL DEFAULT '18:00'"],
+      ["compromissos", "tarefa_origem_id", "ALTER TABLE `compromissos` ADD `tarefa_origem_id` int"],
     ]
-    for (const sql of comandos) {
+    for (const [tabela, coluna, sql] of comandos) {
+      if (!(await faltando(tabela, coluna))) continue
       try {
         await consultar(sql)
       } catch (erro) {
@@ -69,10 +86,10 @@ function garantirColunas(consultar: mysql.Pool["query"]) {
       }
     }
   })().catch((erro: unknown) => {
-    colunasProntas = undefined
+    globalForDb.colunasProntas = undefined
     throw erro
   })
-  return colunasProntas
+  return globalForDb.colunasProntas
 }
 
 export function getPool() {

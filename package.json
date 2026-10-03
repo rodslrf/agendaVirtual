@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "concurrently -n site,avisos \"next dev\" \"tsx scripts/tick-dev.ts\"",
+    "dev:site": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",

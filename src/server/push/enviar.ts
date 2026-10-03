@@ -45,19 +45,25 @@ export async function enviarPush(aviso: AvisoPush) {
   await Promise.all(
     inscricoes.map(async (inscricao) => {
       try {
-        await webpush.sendNotification(
-          {
-            endpoint: inscricao.endpoint,
-            keys: { p256dh: inscricao.p256dh, auth: inscricao.auth },
-          },
-          payload,
-          { TTL: 60 * 60, urgency: "high" },
-        )
+        // Endpoint morto/lento travava o pool e a UI do localhost por dezenas de segundos.
+        await Promise.race([
+          webpush.sendNotification(
+            {
+              endpoint: inscricao.endpoint,
+              keys: { p256dh: inscricao.p256dh, auth: inscricao.auth },
+            },
+            payload,
+            { TTL: 60 * 60, urgency: "high", timeout: 3_000 },
+          ),
+          new Promise((_, rejeitar) => {
+            setTimeout(() => rejeitar(Object.assign(new Error("push timeout"), { statusCode: 408 })), 3_500)
+          }),
+        ])
         enviou = true
       } catch (erro) {
         const status = erro && typeof erro === "object" && "statusCode" in erro ? erro.statusCode : 0
         if (status === 404 || status === 410) await removerInscricao(inscricao.endpoint)
-        else console.error("push", status, inscricao.endpoint)
+        else if (status !== 408) console.error("push", status, inscricao.endpoint)
       }
     }),
   )

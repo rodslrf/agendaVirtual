@@ -84,15 +84,27 @@ export function ocorrenciaParaAviso(
   agora: Date,
   excecoes: Set<string> = new Set(),
 ) {
+  const janelaAtrasMs = 12 * 60 * 60 * 1000
+  if (repeticao === "nenhuma") {
+    if (excecoes.has(chaveDia(inicio))) return null
+    if (inicio.getTime() + janelaAtrasMs < agora.getTime()) return null
+    return inicio
+  }
+
   const hoje = ocorreNoDia(inicio, repeticao, ate, agora)
   const hojeVale = hoje && !excecoes.has(chaveDia(hoje)) ? hoje : null
-  if (hojeVale && agora.getTime() - hojeVale.getTime() < 12 * 60 * 60 * 1000) return hojeVale
-  for (let indice = 0; indice <= 370; indice += 1) {
+  if (hojeVale && agora.getTime() - hojeVale.getTime() < janelaAtrasMs) return hojeVale
+
+  // Avança pelo passo da série em vez de varrer 370 dias com Intl.
+  const passo =
+    repeticao === "diaria" ? 1 : repeticao === "cada_15_dias" ? 15 : repeticao === "semanal" ? 7 : 1
+  const limiteDias = repeticao === "anual" ? 370 : repeticao === "mensal" ? 62 : 21
+  for (let indice = 0; indice <= limiteDias; indice += passo) {
     const dia = somarDias(agora, indice)
     const ocorrencia = ocorreNoDia(inicio, repeticao, ate, dia)
     if (!ocorrencia || excecoes.has(chaveDia(ocorrencia))) continue
     if (hojeVale && ocorrencia.getTime() === hojeVale.getTime()) continue
-    if (ocorrencia.getTime() + 12 * 60 * 60 * 1000 < agora.getTime()) continue
+    if (ocorrencia.getTime() + janelaAtrasMs < agora.getTime()) continue
     return ocorrencia
   }
   return null
